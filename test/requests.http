@@ -1,0 +1,20 @@
+@baseUrl=http://localhost:3000
+
+GET {{baseUrl}}/devices
+
+###
+
+GET {{baseUrl}}/devices/1
+
+###
+
+POST {{baseUrl}}/devices
+Content-Type: application/json
+
+{
+    "id":1,
+    "brand":"test",
+    "model":"test",
+    "type":"Laptop",
+    "batteryLifeHours":5
+}
