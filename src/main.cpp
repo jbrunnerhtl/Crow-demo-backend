@@ -4,14 +4,11 @@
 #include "../include/crow-backend/Laptop.hpp"
 #include "../include/crow-backend/Server.hpp"
 
-int main() {
-    crow::SimpleApp app;
-    
-    InMemoryDeviceRepository* repo = new InMemoryDeviceRepository();
+void create_getRoutes(crow::SimpleApp& app, InMemoryDeviceRepository& repo) {
     CROW_ROUTE(app, "/devices")
     .methods(crow::HTTPMethod::GET)
     ([&repo]{
-        auto list = repo->getAllDevices();
+        auto list = repo.getAllDevices();
         
         crow::json::wvalue::list json_list;
 
@@ -31,7 +28,7 @@ int main() {
     CROW_ROUTE(app, "/devices/<int>")
     .methods(crow::HTTPMethod::GET)
     ([&repo](int id) {
-            Device* d = repo->getDevice(id);
+            Device* d = repo.getDevice(id);
             if(!d) {
                 crow::json::wvalue json_error;
                 json_error["description"]="Nothing found";
@@ -42,7 +39,9 @@ int main() {
             return crow::response(crow::OK, json);
         
     });
+}
 
+void create_postRoutes(crow::SimpleApp& app, InMemoryDeviceRepository& repo) {
     CROW_ROUTE(app, "/devices")
     .methods(crow::HTTPMethod::POST)
     ([&repo](const crow::request& req ){
@@ -71,7 +70,7 @@ int main() {
                 return crow::response(crow::status::BAD_REQUEST, "Battery life hours can't be less then 0");
             }
             Laptop* laptop = new Laptop(id, brand, model, batteryLife);
-            repo->addDevice(laptop);
+            repo.addDevice(laptop);
             return crow::response(crow::status::CREATED);
         }else if(type_device == "Server") {
             int ramGB = body["ramGB"].i();
@@ -81,12 +80,23 @@ int main() {
                 return crow::response(crow::status::BAD_REQUEST, "ramGB is mandatory and can't be less then 0 and cores are also mandatory and also can't be less then 0.");
             }
             Server* server = new Server(id, brand, model, ramGB, cores);
-            repo->addDevice(server);
+            repo.addDevice(server);
             return crow::response(crow::status::CREATED);
         }else {
             return crow::response(crow::status::BAD_REQUEST, "Not valid type");
         }
     });
+}
+
+
+int main() {
+    crow::SimpleApp app;
+    
+    InMemoryDeviceRepository* repo = new InMemoryDeviceRepository();
+    
+    create_getRoutes(app, *repo);
+
+    create_postRoutes(app, *repo);
 
 
     app.bindaddr("127.0.0.1").port(3000).multithreaded().run();
