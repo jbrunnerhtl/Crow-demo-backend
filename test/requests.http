@@ -21,7 +21,7 @@ Content-Type: application/json
 
 ###
 
-PUT {{baseUrl}}/devices/2
+PUT {{baseUrl}}/devices/1
 Content-Type: application/json
 
 {
@@ -31,3 +31,7 @@ Content-Type: application/json
     "type":"Laptop",
     "batteryLifeHours":5
 }
+
+###
+
+DELETE {{baseUrl}}/devices/1

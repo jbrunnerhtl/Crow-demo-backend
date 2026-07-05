@@ -124,6 +124,19 @@ void create_putRoutes(crow::SimpleApp& app, InMemoryDeviceRepository& repo) {
     });
 }
 
+void create_deleteRoutes(crow::SimpleApp& app, InMemoryDeviceRepository& repo) {
+    CROW_ROUTE(app, "/devices/<int>")
+    .methods(crow::HTTPMethod::DELETE)
+    ([&repo](int id){
+        bool valid = repo.deleteDevice(id);
+        if(valid) {
+            return crow::response(crow::status::OK, "Deleted");
+        }else {
+            return crow::response(crow::status::BAD_REQUEST, "Can't be deleted. Id doesn't exists.");
+        }
+    });
+}
+
 
 int main() {
     crow::SimpleApp app;
@@ -135,6 +148,8 @@ int main() {
     create_postRoutes(app, *repo);
 
     create_putRoutes(app, *repo);
+
+    create_deleteRoutes(app, *repo);
 
     app.bindaddr("127.0.0.1").port(3000).multithreaded().run();
     return 0;
