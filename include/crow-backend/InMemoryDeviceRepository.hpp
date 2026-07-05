@@ -10,7 +10,7 @@ class InMemoryDeviceRepository : public IDeviceRepository {
         std::vector<Device*> devices;
     public:
         InMemoryDeviceRepository();
-        void addDevice(Device* d) override;
+        bool addDevice(Device* d) override;
         Device* getDevice(int id) override;
         std::vector<Device*> getAllDevices() override;
         bool updateDevice(int id, Device* d) override;

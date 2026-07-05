@@ -41,18 +41,13 @@ void create_getRoutes(crow::SimpleApp& app, InMemoryDeviceRepository& repo) {
     });
 }
 
-void create_postRoutes(crow::SimpleApp& app, InMemoryDeviceRepository& repo) {
-    CROW_ROUTE(app, "/devices")
-    .methods(crow::HTTPMethod::POST)
-    ([&repo](const crow::request& req ){
-        auto body = crow::json::load(req.body);
-        if(!body) {
-            return crow::response(crow::status::BAD_REQUEST, "Invalid json body.");
-        }
-
-        std::string type_device = body["type"].s();
+Device* check_body(crow::json::rvalue& body) {
+    if(!body) {
+        throw std::runtime_error("Invalid json body.");
+    }
+    std::string type_device = body["type"].s();
         if(type_device.empty()) {
-            return crow::response(crow::status::BAD_REQUEST, "No json field type.");
+            throw std::runtime_error("No field type.");
         }
 
         int id = body["id"].i();
@@ -60,31 +55,72 @@ void create_postRoutes(crow::SimpleApp& app, InMemoryDeviceRepository& repo) {
         std::string model = body["model"].s();
         
         if(!id || brand.empty() || model.empty()) {
-            return crow::response(crow::status::BAD_REQUEST, "No field id or brand or model given.");
+            throw std::runtime_error("No field id or brand or model given.");
         }
-
-
         if(type_device == "Laptop") {
             int batteryLife = body["batteryLifeHours"].i();
             if(!batteryLife || batteryLife < 0) {
-                return crow::response(crow::status::BAD_REQUEST, "Battery life hours can't be less then 0");
+                throw std::runtime_error("Battery life hours can't be less then 0");
             }
             Laptop* laptop = new Laptop(id, brand, model, batteryLife);
-            repo.addDevice(laptop);
-            return crow::response(crow::status::CREATED);
+            return laptop;
         }else if(type_device == "Server") {
             int ramGB = body["ramGB"].i();
             int cores = body["cores"].i();
 
             if(!ramGB || ramGB <0 || !cores || cores < 0) {
-                return crow::response(crow::status::BAD_REQUEST, "ramGB is mandatory and can't be less then 0 and cores are also mandatory and also can't be less then 0.");
+                throw std::runtime_error("ramGB is mandatory and can't be less then 0 and cores are also mandatory and also can't be less then 0.");
             }
             Server* server = new Server(id, brand, model, ramGB, cores);
-            repo.addDevice(server);
-            return crow::response(crow::status::CREATED);
+            return server;
         }else {
-            return crow::response(crow::status::BAD_REQUEST, "Not valid type");
+            throw std::runtime_error("Not valid type");
         }
+}
+
+void create_postRoutes(crow::SimpleApp& app, InMemoryDeviceRepository& repo) {
+    CROW_ROUTE(app, "/devices")
+    .methods(crow::HTTPMethod::POST)
+    ([&repo](const crow::request& req ){
+        auto body = crow::json::load(req.body);
+        
+        try
+        {
+            Device* device = check_body(body);
+            bool valid =repo.addDevice(device);
+            if(!valid) {
+                throw std::runtime_error("Can't be added. Check if id is unique.");
+            }
+            return crow::response(crow::status::CREATED);
+        }
+        catch(const std::exception& e)
+        {
+            return crow::response(crow::status::BAD_REQUEST, e.what());
+        }
+        
+    });
+}
+
+void create_putRoutes(crow::SimpleApp& app, InMemoryDeviceRepository& repo) {
+    CROW_ROUTE(app, "/devices/<int>")
+    .methods(crow::HTTPMethod::PUT)
+    ([&repo](const crow::request& req, int id ){
+        auto body = crow::json::load(req.body);
+
+        try
+        {
+            Device* device = check_body(body);
+            bool valid =repo.updateDevice(id, device);
+            if(!valid) {
+                throw std::runtime_error("Can't be update. Check if id is unique");
+            }
+            return crow::response(crow::status::OK, "Updated");
+        }
+        catch(const std::exception& e)
+        {
+            return crow::response(crow::status::BAD_REQUEST, e.what());   
+        }
+        
     });
 }
 
@@ -98,6 +134,7 @@ int main() {
 
     create_postRoutes(app, *repo);
 
+    create_putRoutes(app, *repo);
 
     app.bindaddr("127.0.0.1").port(3000).multithreaded().run();
     return 0;

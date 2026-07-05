@@ -8,7 +8,7 @@
 class IDeviceRepository {
     public:
 
-        virtual void addDevice(Device* d)= 0;
+        virtual bool addDevice(Device* d)= 0;
         virtual Device* getDevice(int id)= 0;
         virtual std::vector<Device*> getAllDevices() = 0;
         virtual bool updateDevice(int id, Device* d) = 0;

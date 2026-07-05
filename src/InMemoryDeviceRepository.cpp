@@ -2,8 +2,15 @@
 
 InMemoryDeviceRepository::InMemoryDeviceRepository() {}
 
-void InMemoryDeviceRepository::addDevice(Device* d) {
+bool InMemoryDeviceRepository::addDevice(Device* d) {
+    for(Device* d1: this->devices) {
+        if(d1->id==d->id) {
+            return false;
+        }
+    }
     this->devices.push_back(d);
+    return true;
+
 }
 
 Device* InMemoryDeviceRepository::getDevice(int id) {
@@ -24,6 +31,12 @@ std::vector<Device*> InMemoryDeviceRepository::getAllDevices() {
 bool InMemoryDeviceRepository::updateDevice(int id, Device* d) {
     for (size_t i = 0; i < this->devices.size(); i++) {
         if(this->devices[i]->id==id) {
+            for(Device* d1: this->devices) {
+                if(d1->id==d->id && d1->id!=id) {
+                    delete d;
+                    return false;
+                }
+            }
             delete this->devices[i];
 
             this->devices[i] = d;
@@ -31,6 +44,7 @@ bool InMemoryDeviceRepository::updateDevice(int id, Device* d) {
             return true;
         }
     }
+    delete d;
     return false;
 }
 

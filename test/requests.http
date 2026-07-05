@@ -18,3 +18,16 @@ Content-Type: application/json
     "type":"Laptop",
     "batteryLifeHours":5
 }
+
+###
+
+PUT {{baseUrl}}/devices/2
+Content-Type: application/json
+
+{
+    "id":1,
+    "brand":"monkey",
+    "model":"test",
+    "type":"Laptop",
+    "batteryLifeHours":5
+}
